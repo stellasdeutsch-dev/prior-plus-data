@@ -1,0 +1,761 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Prior Plus Data</title>
+<meta name="description" content="Lecture 3 of Statistical Learning: the Beta-Binomial model explained from zero, step by step, with Dota 2 examples, an interactive posterior lab and practice problems.">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@300;400;500&family=Caveat:wght@500;700&family=STIX+Two+Text:ital,wght@0,500;1,500&display=swap">
+<style>
+/* Layout: dark-navy product-catalogue page; framed device mockups in the hero, slate cards, blue gradient feature cards, isometric step blocks, a light "sheet" for dense math. Single committed dark look. */
+:root{
+  color-scheme:dark;
+  --bg:#10151e; --navy:#171e2a; --slate:#202938; --slate-2:#283244; --edge:#4a5468;
+  --text:#e8ecf4; --muted:#949db0; --lav:#9aa3bd; --orange:#f08a3c; --orange-2:#ffb27a;
+  --blue:#3d7ef2; --blue-2:#6ea6ff; --ice:#e3ecff; --paper:#f4f6fb; --ink:#151a24; --ink-2:#5b6478;
+  --display:"Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --wide:"Unbounded", "Arial Black", sans-serif;
+  --body:"Manrope", "Helvetica Neue", Arial, sans-serif;
+  --script:"Caveat", "Segoe Script", cursive;
+  --math:"STIX Two Text", "Times New Roman", serif;
+  --r-xl:34px; --r-l:24px; --r-m:16px;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion:reduce){html{scroll-behavior:auto}}
+body{margin:0;background:var(--bg);color:var(--text);font:400 17px/1.65 var(--body);padding-left:max(14px,env(safe-area-inset-left,0px));padding-right:max(14px,env(safe-area-inset-right,0px));padding-block:14px 40px}
+[hidden]{display:none!important}
+p{margin:0}
+a{color:inherit}
+h1,h2,h3{margin:0;text-wrap:balance}
+.wrap{max-width:1200px;margin:0 auto;display:flex;flex-direction:column;gap:22px}
+.m{font-family:var(--math);font-style:italic;font-size:1.06em}
+.dim{color:var(--lav)}
+.or{color:var(--orange)}
+.blue{color:var(--blue-2)}
+.big2{font-family:var(--display);font-weight:600;letter-spacing:-.045em;line-height:.98}
+.wideh{font-family:var(--wide);font-weight:300;text-transform:uppercase;letter-spacing:.02em;line-height:1.15;font-size:clamp(24px,3.6vw,42px)}
+.wideh b{font-weight:400}
+.eyebrow{font-family:var(--wide);font-weight:400;font-size:11.5px;letter-spacing:.22em;text-transform:uppercase;color:var(--muted)}
+.script{font-family:var(--script);font-weight:500;color:var(--lav);font-size:1.25em;letter-spacing:0}
+.btn{display:inline-flex;align-items:center;gap:8px;border:0;border-radius:12px;padding:13px 20px;font:700 14.5px var(--body);text-decoration:none;cursor:pointer}
+.btn.or{background:var(--orange);color:#1b120a}
+.btn.ghost{background:var(--slate-2);color:var(--text)}
+.btn.white{background:#fff;color:var(--ink)}
+.btn:focus-visible,button:focus-visible,summary:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--blue-2);outline-offset:2px}
+.section{display:flex;flex-direction:column;gap:26px;padding-block:clamp(40px,6vw,80px);padding-inline:clamp(4px,3vw,40px)}
+.pill{display:inline-flex;align-self:flex-start;align-items:center;gap:8px;background:var(--slate-2);border-radius:99px;padding:6px 14px;font-size:13px;font-weight:600;color:var(--text)}
+.pill i{width:7px;height:7px;border-radius:50%;background:var(--orange)}
+.remember{background:linear-gradient(120deg,#2a3448,#1f2735);border:1px solid var(--edge);border-radius:var(--r-m);padding:16px 20px;font-size:16px}
+.remember b{color:var(--orange-2)}
+
+/* nav */
+.nav{position:sticky;top:env(safe-area-inset-top,0px);z-index:10;display:flex;align-items:center;justify-content:space-between;gap:12px;background:rgba(23,30,42,.88);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid var(--edge);border-radius:16px;padding:9px 9px 9px 16px}
+.logo{display:flex;align-items:center;gap:10px;text-decoration:none;font:700 17px var(--display);letter-spacing:-.02em}
+.logo .mk{font-family:var(--wide);font-weight:500;font-size:13px;background:var(--orange);color:#1b120a;border-radius:8px;padding:4px 7px}
+.links{display:flex;gap:20px;font-size:13.5px;color:var(--muted)}
+.links a{text-decoration:none}
+.links a:hover{color:var(--text)}
+
+/* hero */
+.hero{padding-block:clamp(30px,5vw,64px) 0;display:flex;flex-direction:column;gap:28px}
+.hero h1{font-size:clamp(46px,8.4vw,112px)}
+.hero h1 .script{font-size:.42em;display:inline-block;transform:translateY(-.3em) rotate(-4deg);color:var(--orange-2);margin-right:.2em}
+.herorow{display:grid;grid-template-columns:1fr minmax(0,1fr);gap:24px;align-items:end}
+.hero .lead{color:var(--muted);font-size:clamp(17px,1.8vw,20px);max-width:52ch}
+.hero .lead b{color:var(--text)}
+.hero .actions{display:flex;gap:10px;flex-wrap:wrap}
+.devices{display:grid;grid-template-columns:minmax(0,.42fr) minmax(0,1fr);gap:18px;align-items:end;margin-top:6px}
+.frame{border:2px solid var(--edge);border-radius:30px;padding:10px;background:rgba(255,255,255,.02)}
+.frame.phone{border-radius:34px}
+.scr{background:var(--navy);border-radius:22px;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:100%}
+.phone .scr{border-radius:26px}
+.scr .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:var(--muted)}
+.scr .bar b{font-family:var(--display);color:var(--orange);font-size:15px}
+.scr h3{font-family:var(--wide);font-weight:300;text-transform:uppercase;font-size:clamp(15px,1.9vw,24px);line-height:1.2}
+.chipr{display:flex;gap:6px;flex-wrap:wrap}
+.chipr span{font-size:11.5px;background:var(--slate-2);border-radius:8px;padding:4px 8px;color:var(--text)}
+.chipr span.o{background:var(--orange);color:#1b120a;font-weight:700}
+.mini-curve{width:100%;height:auto;display:block;background:var(--slate);border-radius:14px}
+.statrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.stat{background:var(--slate);border-radius:12px;padding:10px 12px}
+.stat b{display:block;font:700 22px var(--display);letter-spacing:-.03em}
+.stat small{color:var(--muted);font-size:11.5px}
+
+/* start */
+.startgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
+.card{background:var(--navy);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-xl);padding:clamp(20px,4vw,38px);display:flex;flex-direction:column;gap:14px;min-width:0}
+.card.blue{background:linear-gradient(140deg,#4a8bff 0%,#3d7ef2 45%,#2d63d6 100%);border-color:transparent;color:#fff}
+.card.blue .dim{color:#cfe0ff}
+.card.paper{background:var(--paper);color:var(--ink);border-color:transparent}
+.card.paper .dim{color:var(--ink-2)}
+.checks{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px}
+.checks li{display:flex;gap:10px}
+.checks li::before{content:"✓";flex-shrink:0;width:22px;height:22px;border-radius:7px;background:var(--orange);color:#1b120a;display:grid;place-items:center;font-size:12px;font-weight:800;margin-top:2px}
+.h3{font:600 clamp(20px,2.2vw,26px)/1.2 var(--display);letter-spacing:-.025em}
+
+/* stats like catalogue */
+.stats4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px}
+.sbox{background:var(--slate);border-radius:var(--r-l);padding:20px;display:flex;flex-direction:column;gap:8px}
+.sbox b{font:700 clamp(36px,4.6vw,56px) var(--display);letter-spacing:-.05em;line-height:1}
+.sbox b.or{color:var(--orange)}
+.sbox span{color:var(--muted);font-size:14.5px}
+
+/* tools */
+.tools{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.tool{background:var(--navy);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-l);padding:clamp(18px,3vw,26px);display:flex;flex-direction:column;gap:12px;min-width:0}
+.tool.wide{grid-column:1 / -1}
+.tool p{font-size:15.5px;color:#c9cfdb}
+.tool .tn{font-family:var(--wide);font-size:11px;letter-spacing:.2em;color:var(--orange);text-transform:uppercase}
+.frm{display:block;font-family:var(--math);font-style:italic;font-size:clamp(17px,2vw,21px);line-height:1.6;background:var(--slate);border-radius:12px;padding:12px 14px;text-align:center;overflow-x:auto;color:#fff}
+.frm.big{font-size:clamp(22px,3vw,32px)}
+.card.paper .frm,.sheet .frm{background:#fff;color:var(--ink);border:1px solid #dfe4ee}
+details{background:var(--slate);border-radius:12px;padding:12px 16px}
+summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;gap:12px;font-weight:600;font-size:15.5px}
+summary::-webkit-details-marker{display:none}
+summary::after{content:"+";flex-shrink:0;width:24px;height:24px;border-radius:7px;background:var(--slate-2);display:grid;place-items:center;font-weight:600}
+details[open] summary::after{content:"−";background:var(--orange);color:#1b120a}
+details .a{margin-top:10px;font-size:15.5px;color:#c9cfdb;display:flex;flex-direction:column;gap:6px}
+
+/* chat bubbles */
+.chats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px}
+.chat{background:#2a211d;border-radius:var(--r-l);padding:18px 20px;display:flex;flex-direction:column;gap:8px}
+.chat .who{display:flex;justify-content:space-between;gap:10px;font-size:13px}
+.chat .who b{color:var(--orange)}
+.chat .who span{color:var(--muted)}
+.chat p{font-size:15px;color:#e6dcd5}
+
+/* light sheet */
+.sheet{background:var(--paper);color:var(--ink);border-radius:var(--r-xl);padding:clamp(22px,4vw,46px);display:flex;flex-direction:column;gap:20px}
+.sheet .eyebrow{color:var(--ink-2)}
+.sheet .wideh .dim{color:#8a93a8}
+.derive{display:flex;flex-direction:column;background:#fff;border:1px solid #dfe4ee;border-radius:var(--r-l);overflow:hidden}
+.drow{display:grid;grid-template-columns:96px minmax(0,1.15fr) minmax(0,1fr);gap:14px;padding:14px 18px;border-top:1px solid #e7ebf3;align-items:baseline}
+.drow:first-child{border-top:0}
+.drow .k{font-size:12.5px;font-weight:700;color:var(--blue)}
+.drow .eq{font-family:var(--math);font-style:italic;font-size:18px;color:var(--ink);overflow-x:auto;white-space:nowrap;padding-bottom:2px}
+.drow .why{font-size:14.5px;color:var(--ink-2)}
+.drow.ans{background:#eaf1ff}
+.drow.ans .eq{font-weight:600}
+.dark .derive{background:var(--navy);border-color:var(--edge)}
+.dark .drow{border-color:var(--edge)}
+.dark .drow .eq{color:#fff}
+.dark .drow .why{color:var(--muted)}
+.dark .drow.ans{background:#22304a}
+.dark .drow .k{color:var(--orange)}
+
+/* isometric steps */
+.isosteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+.iso{background:var(--slate);border-radius:var(--r-l);padding:20px;display:flex;flex-direction:column;gap:10px;align-items:center;text-align:center}
+.iso svg{width:120px;height:auto}
+.iso .no{font-family:var(--wide);color:var(--muted);font-size:13px;letter-spacing:.1em}
+.iso h3{font:600 19px var(--display);letter-spacing:-.02em}
+.iso h3 em{font-style:normal;color:var(--orange)}
+.iso p{font-size:15px;color:#c9cfdb}
+
+/* banner */
+.banner{border-radius:var(--r-xl);background:linear-gradient(120deg,#5b97ff,#3d7ef2 60%,#2c61d4);overflow:hidden;padding:clamp(22px,4vw,44px);position:relative}
+.banner .huge{font-family:var(--display);font-weight:700;letter-spacing:-.06em;line-height:.9;font-size:clamp(54px,12vw,170px);color:#d9e7ff;white-space:nowrap}
+.banner .huge .m{font-size:1em;color:#fff}
+.banner small{position:absolute;right:clamp(16px,3vw,36px);top:clamp(14px,3vw,30px);color:#e5efff;font-size:14px;font-weight:600;text-align:right}
+
+/* lab */
+.labgrid{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(0,1fr);gap:16px}
+.labpanel{background:var(--navy);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-l);padding:clamp(16px,3vw,24px);display:flex;flex-direction:column;gap:14px;min-width:0}
+#chart{width:100%;height:auto;display:block}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:13px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+.legend i{width:18px;height:3px;border-radius:2px;display:inline-block}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap}
+.ctrl button{border:0;border-radius:12px;padding:11px 16px;font:700 14px var(--body);cursor:pointer}
+.b-hit{background:var(--orange);color:#1b120a}
+.b-miss{background:var(--slate-2);color:var(--text)}
+.b-reset{background:transparent;color:var(--muted);border:1px solid var(--edge)!important}
+.sl{display:grid;grid-template-columns:1fr auto;gap:2px 10px;font-size:13.5px}
+.sl label{color:var(--muted);font-weight:600}
+.sl output{font-weight:700;font-variant-numeric:tabular-nums}
+.sl input{grid-column:1 / -1;width:100%;accent-color:var(--orange)}
+.read{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.read div{background:var(--slate);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:2px}
+.read small{color:var(--muted);font-size:12px;font-weight:600}
+.read b{font:700 22px var(--display);letter-spacing:-.02em;font-variant-numeric:tabular-nums}
+.read div.hl{background:linear-gradient(140deg,#4a8bff,#2d63d6)}
+.read div.hl small{color:#d7e5ff}
+.datarow{display:flex;gap:5px;flex-wrap:wrap;min-height:30px}
+.tok{width:30px;height:30px;border-radius:8px;display:grid;place-items:center;font-size:13px;font-weight:800}
+.tok.H{background:var(--orange);color:#1b120a}
+.tok.M{background:var(--slate-2);color:var(--text)}
+.note2{font-size:14px;color:var(--muted)}
+.sheet .note2{color:var(--ink-2)}
+
+/* compare */
+.cmp{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px}
+.cmp .c{border-radius:var(--r-l);padding:20px;display:flex;flex-direction:column;gap:8px;background:#fff;border:1px solid #dfe4ee}
+.cmp .c b.n{font:700 40px var(--display);letter-spacing:-.04em;line-height:1}
+.cmp .c .t{font-weight:700}
+.cmp .c p{font-size:14.5px;color:var(--ink-2)}
+.cmp .c.mle b.n{color:#c25d14}
+.cmp .c.map b.n{color:#2d63d6}
+.cmp .c.mean b.n{color:#151a24}
+
+.twocol{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:18px;align-items:start}
+.prose{display:flex;flex-direction:column;gap:14px;max-width:66ch}
+.prose p{color:#c9cfdb}
+.sheet .prose p{color:#2d3444}
+.table{width:100%;border-collapse:collapse;font-size:15px;font-variant-numeric:tabular-nums}
+.table th{text-align:left;font-size:12.5px;color:var(--ink-2);padding:8px 10px;font-weight:700}
+.table td{padding:10px;border-top:1px solid #e3e8f1}
+.tablewrap{overflow-x:auto;min-width:0;background:#fff;border:1px solid #dfe4ee;border-radius:var(--r-l)}
+.tablewrap .table{min-width:620px}
+.traps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.trap{background:var(--slate);border-radius:var(--r-m);padding:16px;display:flex;flex-direction:column;gap:6px;font-size:14.5px;color:#c9cfdb}
+.trap b{color:var(--orange-2)}
+.faq{display:flex;flex-direction:column;gap:10px;max-width:820px}
+
+/* practice */
+.probs{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px}
+.prob{background:var(--navy);border:1px solid rgba(255,255,255,.07);border-radius:var(--r-l);padding:clamp(18px,3vw,26px);display:flex;flex-direction:column;gap:12px;min-width:0}
+.prob p{font-size:15.5px;color:#c9cfdb}
+.ptop{display:flex;align-items:center;gap:10px}
+.pn{font-family:var(--wide);font-size:13px;color:var(--muted);letter-spacing:.1em}
+.lvl{font-size:12px;font-weight:700;padding:4px 10px;border-radius:8px}
+.l1{background:#1f3a2c;color:#8fe0b0}.l2{background:#22304a;color:var(--blue-2)}.l3{background:#3b2a1d;color:var(--orange-2)}.l4{background:#3a2140;color:#e3a6f0}
+.prob h3{font:600 20px var(--display);letter-spacing:-.02em}
+.steps-l{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:6px}
+
+/* final */
+.final{display:grid;grid-template-columns:1fr auto;gap:24px;align-items:end;background:#fff;color:var(--ink);border-radius:var(--r-xl);padding:clamp(24px,5vw,60px);overflow:hidden}
+.final .big2{font-size:clamp(46px,8vw,110px);color:#7f8bb0}
+.final .big2 span{color:#151a24}
+.final .script{color:#c25d14;font-size:clamp(26px,3vw,40px)}
+.final .side{display:flex;flex-direction:column;gap:12px;max-width:34ch}
+.final .side p{color:var(--ink-2)}
+footer{text-align:center;color:var(--muted);font-size:13px;padding-top:14px}
+
+@media (max-width:980px){
+  .links{display:none}
+  .herorow,.startgrid,.labgrid,.twocol,.tools{grid-template-columns:1fr}
+  .devices{grid-template-columns:1fr}
+  .devices .phone{display:none}
+  .stats4{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .isosteps,.cmp,.traps{grid-template-columns:1fr}
+  .chats,.probs{grid-template-columns:1fr}
+  .drow{grid-template-columns:1fr;gap:4px}
+  .drow .eq{white-space:normal}
+  .final{grid-template-columns:1fr}
+}
+@media (max-width:520px){
+  .statrow{grid-template-columns:1fr 1fr}
+  .read{grid-template-columns:1fr 1fr}
+  .stats4{grid-template-columns:1fr 1fr}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <nav class="nav" aria-label="Page">
+    <a class="logo" href="#top"><span class="mk">β</span>Prior Plus Data</a>
+    <span class="links"><a href="#story">Story</a><a href="#toolbox">Toolbox</a><a href="#derive">Derivation</a><a href="#lab">Lab</a><a href="#numbers">Mean &amp; MAP</a><a href="#exam">Exam</a><a href="#practice">Practice</a></span>
+    <a class="btn or" href="#lab">Open the lab</a>
+  </nav>
+
+  <!-- HERO -->
+  <header class="hero" id="top">
+    <span class="eyebrow">Statistical Learning · Lecture 3 · Beta-Binomial model</span>
+    <h1 class="big2">Prior <span class="dim">plus</span> data<br><span class="script">and that's it:</span><span class="dim">posterior.</span></h1>
+    <div class="herorow">
+      <p class="lead">Yesterday's MLE says a Mirana who hit 3 of 3 arrows <b>never misses</b>. Today you learn the Bayesian fix: start with a sensible belief, add the data as counts, and get a whole curve of beliefs back. <b>No prior knowledge needed</b>; every tool is explained on this page.</p>
+      <div class="actions"><a class="btn or" href="#story">Start the lecture</a><a class="btn ghost" href="#practice">Practice problems</a></div>
+    </div>
+    <div class="devices" aria-hidden="true">
+      <div class="frame phone">
+        <div class="scr">
+          <div class="bar"><span>9:41</span><b>β</b><span>●●●</span></div>
+          <h3>Mirana · <span class="dim">hit rate θ</span></h3>
+          <div class="chipr"><span class="o">prior Beta(2, 2)</span><span>+3 hits</span><span>+0 misses</span></div>
+          <svg class="mini-curve" viewBox="0 0 220 120"><path id="phoneCurve" fill="rgba(110,166,255,.35)" stroke="#6ea6ff" stroke-width="2.5" d=""/></svg>
+          <div class="statrow"><div class="stat"><b>0.71</b><small>posterior mean</small></div><div class="stat"><b class="or" style="color:var(--orange)">1.00</b><small>MLE</small></div></div>
+        </div>
+      </div>
+      <div class="frame">
+        <div class="scr">
+          <div class="bar"><span>beta-binomial · dashboard</span><span>Lecture 3</span></div>
+          <h3>Belief before <span class="dim">→ data →</span> belief after</h3>
+          <svg class="mini-curve" viewBox="0 0 520 170"><path id="deskPrior" fill="none" stroke="#9aa3bd" stroke-width="2.5" stroke-dasharray="6 6" d=""/><path id="deskPost" fill="rgba(110,166,255,.30)" stroke="#6ea6ff" stroke-width="3" d=""/></svg>
+          <div class="statrow"><div class="stat"><b>Beta(2, 2)</b><small>prior: “about 50%”</small></div><div class="stat"><b>3 / 0</b><small>hits / misses</small></div><div class="stat"><b style="color:var(--blue-2)">Beta(5, 2)</b><small>posterior</small></div></div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- START -->
+  <section class="section">
+    <div class="startgrid">
+      <div class="card">
+        <span class="eyebrow">By the end of this lecture</span>
+        <h2 class="wideh">You will <span class="dim">be able to</span></h2>
+        <ul class="checks">
+          <li>explain prior, likelihood and posterior with one Dota example</li>
+          <li>derive the posterior Beta(a + k, b + n − k) line by line</li>
+          <li>compute the posterior mean, the MAP and the MLE, and say why they differ</li>
+          <li>predict the next arrow with the posterior predictive</li>
+          <li>solve the Beta-prior tasks from the 2025 and 2026 finals</li>
+        </ul>
+      </div>
+      <div class="card blue">
+        <span class="eyebrow" style="color:#d7e5ff">What you need already</span>
+        <h3 class="h3">Nothing. The toolbox in Part 2 covers it.</h3>
+        <p>How to study: read one part, close your eyes, say the <b>“remember it”</b> line out loud. At the end, answer the explain-back questions before opening them. That is how it becomes yours.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PART 1 -->
+  <section class="section" id="story">
+    <span class="pill"><i></i>Part 1 · The problem</span>
+    <h2 class="wideh">3 arrows, 3 hits. <span class="dim">Does she never miss?</span></h2>
+    <div class="stats4">
+      <div class="sbox"><b class="or">3</b><span>arrows shot by the new Mirana</span></div>
+      <div class="sbox"><b>3</b><span>hits</span></div>
+      <div class="sbox"><b>0</b><span>misses</span></div>
+      <div class="sbox"><b class="or">1.00</b><span>MLE hit rate: “she never misses”</span></div>
+    </div>
+    <div class="twocol">
+      <div class="prose">
+        <p>The MLE (hits ÷ tries) says θ̂ = 3/3 = 1. If you believed it, you would predict that the next arrow hits with probability 100%. Nobody in Dota believes that after three arrows. The MLE <b>overfits</b>: with little data it trusts the data too much. The course calls this the <b>zero-count problem</b> or the <b>black swan paradox</b>: you never saw a miss, so the MLE says a miss is impossible.</p>
+        <p>What does an experienced player do instead? They already have a feeling: “most Miranas hit about half their arrows”. Three hits move that feeling up, but not to 100%. That feeling before the data is called the <b>prior</b>. Combining it with the data gives the <b>posterior</b>. Today we make this exact.</p>
+      </div>
+      <div class="chats">
+        <div class="chat"><div class="who"><b>MLE</b><span>after 3 arrows</span></div><p>Hit rate is 1.00. She will never miss. Ever.</p></div>
+        <div class="chat"><div class="who"><b>Bayesian</b><span>after 3 arrows</span></div><p>I thought “about 0.5”. Three hits push me up to about 0.71. Ask me again after 30 arrows.</p></div>
+      </div>
+    </div>
+    <p class="remember"><b>Remember it:</b> MLE uses only the data. Bayes uses the data <i>and</i> what you believed before. With little data, that makes a big difference.</p>
+  </section>
+
+  <!-- PART 2 TOOLBOX -->
+  <section class="section" id="toolbox">
+    <span class="pill"><i></i>Part 2 · Toolbox</span>
+    <h2 class="wideh">Five tools. <span class="dim">Each with a tiny example.</span></h2>
+    <div class="tools">
+      <article class="tool">
+        <span class="tn">Tool 1 · Bayes' rule for a parameter</span>
+        <h3 class="h3">Turn “data given θ” into “θ given data”</h3>
+        <div class="frm">p(θ | D) = p(D | θ) · p(θ) / p(D)</div>
+        <p><b>p(θ)</b> prior: belief about θ before the data. <b>p(D | θ)</b> likelihood: how probable the data is if θ were true. <b>p(θ | D)</b> posterior: belief after the data. <b>p(D)</b>: one number that makes the area 1. This exact formula was asked on the 2026 final, Task 1(a).</p>
+      </article>
+      <article class="tool">
+        <span class="tn">Tool 2 · “∝” means “proportional to”</span>
+        <h3 class="h3">Ignore constants until the very end</h3>
+        <div class="frm">p(θ | D) ∝ p(D | θ) · p(θ)</div>
+        <p>p(D) does not contain θ, so it cannot change the <i>shape</i> of the curve. We drop it and write ∝. Same for any factor without θ, like C(n, k). Only factors with θ matter.</p>
+        <details><summary>Try it: which factors can you drop from 6 · θ³ · (1 − θ) · 0.2?</summary><div class="a"><p>6 and 0.2 (no θ). What stays: <span class="m">θ³(1 − θ)</span>.</p></div></details>
+      </article>
+      <article class="tool">
+        <span class="tn">Tool 3 · Powers add up</span>
+        <h3 class="h3">Same base: add the exponents</h3>
+        <div class="frm">θ<sup>a</sup> · θ<sup>b</sup> = θ<sup>a+b</sup></div>
+        <p>θ² · θ³ = θ·θ · θ·θ·θ = θ⁵. Same for (1 − θ). This one rule does all the work today.</p>
+        <details><summary>Try it: θ⁴(1 − θ)² · θ(1 − θ)⁵ = ?</summary><div class="a"><p><span class="m">θ⁵(1 − θ)⁷</span>.</p></div></details>
+      </article>
+      <article class="tool">
+        <span class="tn">Tool 4 · Density</span>
+        <h3 class="h3">A curve whose area gives probability</h3>
+        <p>θ can be any number between 0 and 1, so our belief is a curve, a <b>density</b>. Like GPM: it is not gold itself, gold = GPM × minutes. Probability = density × width = area. A density can be higher than 1; only areas must stay ≤ 1.</p>
+      </article>
+      <article class="tool wide">
+        <span class="tn">Tool 5 · The Beta distribution, recognised by its shape</span>
+        <h3 class="h3">Beta(A, B) is any curve shaped like θ<sup>A−1</sup>(1 − θ)<sup>B−1</sup> on [0, 1]</h3>
+        <div class="frm">Beta(θ | A, B) = θ<sup>A−1</sup> (1 − θ)<sup>B−1</sup> / B(A, B)</div>
+        <p>B(A, B) is only the number that makes the area 1; you never compute it by hand. The <b>key skill</b>: when you see <span class="m">θ<sup>4</sup>(1 − θ)<sup>1</sup></span>, read off the exponents and add 1: that is Beta(5, 2). Think of A as “hits + 1” and B as “misses + 1”. Mean: <span class="m">A/(A + B)</span>.</p>
+        <details><summary>Try it: which Beta has the shape θ⁹(1 − θ)⁴⁹?</summary><div class="a"><p>Beta(10, 50). Exponent + 1 each. Its mean is 10/60 ≈ 0.167 (remember this one, it was on the 2025 final).</p></div></details>
+      </article>
+    </div>
+    <p class="remember"><b>Remember it:</b> posterior ∝ likelihood × prior; drop factors without θ; add exponents; read the Beta off the exponents (+1).</p>
+  </section>
+
+  <!-- PART 3 INGREDIENTS -->
+  <section class="section">
+    <span class="pill"><i></i>Part 3 · The three ingredients</span>
+    <h2 class="wideh">Likelihood, prior, posterior. <span class="dim">One step each.</span></h2>
+    <div class="isosteps">
+      <div class="iso">
+        <svg viewBox="0 0 120 110" aria-hidden="true"><polygon points="60,10 105,32 60,54 15,32" fill="#6ea6ff"/><polygon points="15,32 60,54 60,100 15,78" fill="#2d63d6"/><polygon points="105,32 60,54 60,100 105,78" fill="#3d7ef2"/><text x="60" y="38" text-anchor="middle" font-family="Unbounded, sans-serif" font-size="16" fill="#fff">01</text></svg>
+        <span class="no">Likelihood</span>
+        <h3>What the <em>data</em> says</h3>
+        <p>k hits and n − k misses: <span class="m">θ<sup>k</sup>(1 − θ)<sup>n−k</sup></span>. The Binomial's C(n, k) has no θ, so it drops (Tool 2).</p>
+      </div>
+      <div class="iso">
+        <svg viewBox="0 0 120 110" aria-hidden="true"><polygon points="60,10 105,32 60,54 15,32" fill="#ffb27a"/><polygon points="15,32 60,54 60,100 15,78" fill="#c25d14"/><polygon points="105,32 60,54 60,100 105,78" fill="#f08a3c"/><text x="60" y="38" text-anchor="middle" font-family="Unbounded, sans-serif" font-size="16" fill="#1b120a">02</text></svg>
+        <span class="no">Prior</span>
+        <h3>What you <em>believed</em> before</h3>
+        <p>A Beta(a, b): <span class="m">θ<sup>a−1</sup>(1 − θ)<sup>b−1</sup></span>. Same shape as a likelihood, as if you had already seen a − 1 hits and b − 1 misses.</p>
+      </div>
+      <div class="iso">
+        <svg viewBox="0 0 120 110" aria-hidden="true"><polygon points="60,10 105,32 60,54 15,32" fill="#e8ecf4"/><polygon points="15,32 60,54 60,100 15,78" fill="#7d879c"/><polygon points="105,32 60,54 60,100 105,78" fill="#b4bccc"/><text x="60" y="38" text-anchor="middle" font-family="Unbounded, sans-serif" font-size="16" fill="#151a24">03</text></svg>
+        <span class="no">Posterior</span>
+        <h3>What you believe <em>now</em></h3>
+        <p>Multiply them. The shapes merge into one Beta. Derivation in Part 4.</p>
+      </div>
+    </div>
+    <div class="card paper">
+      <span class="eyebrow">Choosing a prior: a, b are “pseudo-counts”</span>
+      <div class="tablewrap">
+        <table class="table">
+          <thead><tr><th>prior</th><th>feels like having seen</th><th>mean a/(a+b)</th><th>meaning</th></tr></thead>
+          <tbody>
+            <tr><td>Beta(1, 1)</td><td>0 hits, 0 misses</td><td>0.5</td><td>flat: “no idea at all”</td></tr>
+            <tr><td>Beta(2, 2)</td><td>1 hit, 1 miss</td><td>0.5</td><td>gentle: “probably around half”</td></tr>
+            <tr><td>Beta(20, 20)</td><td>19 hits, 19 misses</td><td>0.5</td><td>strong: “I'm quite sure it's about half”</td></tr>
+            <tr><td>Beta(8, 4)</td><td>7 hits, 3 misses</td><td>0.67</td><td>“good Miranas hit about 2 of 3”</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="note2">The sum a + b is the <b>strength</b> of the prior (the course calls it the effective sample size): how many arrows your belief is “worth”.</p>
+    </div>
+    <p class="remember"><b>Remember it:</b> the prior Beta(a, b) is like having already watched a − 1 hits and b − 1 misses. Bigger a + b = stronger belief.</p>
+  </section>
+
+  <!-- PART 4 DERIVATION -->
+  <section class="section" id="derive">
+    <div class="sheet">
+      <span class="eyebrow">Part 4 · The derivation, every line with its reason</span>
+      <h2 class="wideh">Prior Beta(a, b) <span class="dim">+ k hits, n − k misses</span></h2>
+      <div class="derive">
+        <div class="drow"><span class="k">Tool 2</span><span class="eq">p(θ | D) ∝ p(D | θ) · p(θ)</span><span class="why">Bayes' rule without the constant p(D)</span></div>
+        <div class="drow"><span class="k">plug in</span><span class="eq">∝ C(n,k) θ<sup>k</sup>(1 − θ)<sup>n−k</sup> · θ<sup>a−1</sup>(1 − θ)<sup>b−1</sup> / B(a,b)</span><span class="why">likelihood (Binomial) times prior (Beta)</span></div>
+        <div class="drow"><span class="k">drop</span><span class="eq">∝ θ<sup>k</sup>(1 − θ)<sup>n−k</sup> · θ<sup>a−1</sup>(1 − θ)<sup>b−1</sup></span><span class="why">C(n, k) and B(a, b) contain no θ</span></div>
+        <div class="drow"><span class="k">Tool 3</span><span class="eq">= θ<sup>a+k−1</sup> (1 − θ)<sup>b+n−k−1</sup></span><span class="why">add exponents of θ, and of (1 − θ)</span></div>
+        <div class="drow ans"><span class="k">Tool 5</span><span class="eq">θ | D ~ Beta(a + k, b + n − k)</span><span class="why">read the Beta off the exponents (+1)</span></div>
+      </div>
+      <div class="twocol">
+        <div class="prose">
+          <p><b>In words:</b> add the hits to a, add the misses to b. That's the whole update. The prior parameters really behave like counts, which is why they are called <b>pseudo-counts</b>.</p>
+          <p><b>Conjugate prior:</b> the prior was a Beta and the posterior is again a Beta, just with new numbers. A prior with this property is called <b>conjugate</b> to the likelihood. That is why we chose the Beta: the math stays one line long.</p>
+        </div>
+        <div class="prose">
+          <p><b>Our Mirana:</b> prior Beta(2, 2), data 3 hits, 0 misses:</p>
+          <div class="frm">Beta(2 + 3, 2 + 0) = Beta(5, 2)</div>
+          <p><b>Order doesn't matter:</b> update after each arrow or all at once, you end at the same Beta. Adding counts one at a time or in a batch gives the same total.</p>
+        </div>
+      </div>
+    </div>
+    <div class="banner" aria-label="Posterior Beta of a plus k and b plus n minus k">
+      <small>the only formula<br>to memorise today</small>
+      <div class="huge"><span class="m">a + k</span>, <span class="m">b + n − k</span></div>
+    </div>
+    <p class="remember"><b>Remember it:</b> Beta prior × Binomial likelihood = Beta posterior. Hits go to a, misses go to b.</p>
+  </section>
+
+  <!-- LAB -->
+  <section class="section" id="lab">
+    <span class="pill"><i></i>Part 5 · Posterior lab</span>
+    <h2 class="wideh">Shoot arrows. <span class="dim">Watch the belief update.</span></h2>
+    <div class="labgrid">
+      <div class="labpanel">
+        <div class="legend"><span><i style="background:#9aa3bd"></i>prior</span><span><i style="background:#6ea6ff"></i>posterior</span><span><i style="background:#f08a3c"></i>MLE k/n</span><span><i style="background:#fff"></i>posterior mean</span></div>
+        <svg id="chart" viewBox="0 0 560 260" role="img" aria-label="Prior and posterior Beta curves"></svg>
+        <div class="ctrl">
+          <button type="button" class="b-hit" id="addH">+ Hit</button>
+          <button type="button" class="b-miss" id="addM">+ Miss</button>
+          <button type="button" class="b-reset" id="clear">Clear arrows</button>
+        </div>
+        <div class="datarow" id="data"></div>
+      </div>
+      <div class="labpanel">
+        <div class="sl"><label for="pa">prior a (think: hits + 1)</label><output id="pao">2</output><input type="range" id="pa" min="1" max="30" step="1" value="2"></div>
+        <div class="sl"><label for="pb">prior b (think: misses + 1)</label><output id="pbo">2</output><input type="range" id="pb" min="1" max="30" step="1" value="2"></div>
+        <div class="read">
+          <div class="hl"><small>posterior</small><b id="rPost">Beta(5, 2)</b></div>
+          <div><small>posterior mean</small><b id="rMean">0.71</b></div>
+          <div><small>MAP (peak)</small><b id="rMap">0.80</b></div>
+          <div><small>MLE k/n</small><b id="rMle">1.00</b></div>
+          <div><small>posterior sd</small><b id="rSd">0.16</b></div>
+          <div><small>P(next arrow hits)</small><b id="rPred">0.71</b></div>
+        </div>
+        <p class="note2" id="lnote"></p>
+      </div>
+    </div>
+    <div class="card paper">
+      <span class="eyebrow">Three experiments to do now</span>
+      <ol class="steps-l" style="color:#2d3444">
+        <li><b>Prior strength.</b> Keep 3 hits. Set the prior to Beta(1, 1), then Beta(2, 2), then Beta(20, 20). The stronger the prior, the less 3 hits move the posterior.</li>
+        <li><b>Data wins in the end.</b> Prior Beta(20, 20). Click “+ Hit” until you have 30 hits and 10 misses. The posterior walks from 0.5 towards the MLE 0.75.</li>
+        <li><b>More data, narrower curve.</b> Watch the posterior sd shrink as you add arrows.</li>
+      </ol>
+    </div>
+  </section>
+
+  <!-- PART 6 NUMBERS -->
+  <section class="section" id="numbers">
+    <div class="sheet">
+      <span class="eyebrow">Part 6 · Three numbers from one posterior</span>
+      <h2 class="wideh">Mean, MAP, MLE. <span class="dim">Why are they different?</span></h2>
+      <div class="prose" style="max-width:none">
+        <p>The posterior is a whole curve. Often you need one number. There are three common choices. Write the posterior as Beta(A, B) with <span class="m">A = a + k</span>, <span class="m">B = b + n − k</span>.</p>
+      </div>
+      <div class="cmp">
+        <div class="c mean"><span class="t">Posterior mean</span><b class="n">5/7 ≈ 0.71</b><span class="m">A / (A + B)</span><p>The balance point of the curve. Uses the whole belief. This is also the probability that the next arrow hits.</p></div>
+        <div class="c map"><span class="t">MAP (the peak)</span><b class="n">4/5 = 0.80</b><span class="m">(A − 1) / (A + B − 2)</span><p>The single most believable θ. “Maximum a posteriori”: the top of the posterior curve.</p></div>
+        <div class="c mle"><span class="t">MLE</span><b class="n">3/3 = 1.00</b><span class="m">k / n</span><p>Ignores the prior completely. Only the data.</p></div>
+      </div>
+      <p class="note2">Numbers for our Mirana: prior Beta(2, 2), 3 hits, 0 misses → posterior Beta(5, 2).</p>
+      <h3 class="h3" style="color:var(--ink)">Where does the MAP formula come from? <span class="dim">(Week 2, Question 1)</span></h3>
+      <div class="derive">
+        <div class="drow"><span class="k">log</span><span class="eq">log p(θ | D) = (A − 1) log θ + (B − 1) log(1 − θ) + const</span><span class="why">log of the Beta shape; B(A, B) becomes a constant</span></div>
+        <div class="drow"><span class="k">derivative</span><span class="eq">(A − 1)/θ − (B − 1)/(1 − θ) = 0</span><span class="why">top of the hill: slope 0</span></div>
+        <div class="drow"><span class="k">× θ(1−θ)</span><span class="eq">(A − 1)(1 − θ) = (B − 1)θ</span><span class="why">clear both fractions</span></div>
+        <div class="drow ans"><span class="k">solve</span><span class="eq">θ̂<sub>MAP</sub> = (A − 1)/(A + B − 2)</span><span class="why">expand, collect θ (works when A, B &gt; 1)</span></div>
+      </div>
+      <p class="note2">Notice: this is exactly the MLE calculation, with “hits” = A − 1 and “misses” = B − 1. The MAP is the MLE of the data <i>plus</i> the prior's pseudo-counts. With a flat prior Beta(1, 1) the MAP equals the MLE.</p>
+    </div>
+  </section>
+
+  <!-- PART 7 COMPROMISE -->
+  <section class="section">
+    <span class="pill"><i></i>Part 7 · The compromise</span>
+    <h2 class="wideh">The posterior mean sits <span class="dim">between belief and data.</span></h2>
+    <div class="twocol">
+      <div class="prose">
+        <p>Write the posterior mean in a clever way. Prior mean <span class="m">m = a/(a + b)</span>, MLE <span class="m">k/n</span>, and the weight</p>
+        <div class="frm">λ = (a + b) / (a + b + n)</div>
+        <p>Then the posterior mean is a <b>weighted average</b>:</p>
+        <div class="frm big">E[θ | D] = λ · m + (1 − λ) · k/n</div>
+        <p>λ is “how many pseudo-arrows the prior is worth, out of all arrows”. With few real arrows, λ is big and the prior dominates. With many arrows, λ goes to 0 and the data wins. Belief is never stuck; it only needs enough evidence.</p>
+      </div>
+      <div class="dark">
+        <div class="derive">
+          <div class="drow"><span class="k">weight</span><span class="eq">λ = 4/(4 + 3) = 4/7</span><span class="why">prior Beta(2, 2) is worth 4 arrows; 3 real arrows</span></div>
+          <div class="drow"><span class="k">mix</span><span class="eq">(4/7)·0.5 + (3/7)·1 = 2/7 + 3/7</span><span class="why">prior mean 0.5, MLE 1</span></div>
+          <div class="drow ans"><span class="k">result</span><span class="eq">= 5/7 ≈ 0.71 ✓</span><span class="why">same as A/(A + B)</span></div>
+          <div class="drow"><span class="k">300 arrows</span><span class="eq">λ = 4/304 ≈ 0.013</span><span class="why">after 300 arrows the prior barely matters</span></div>
+        </div>
+      </div>
+    </div>
+    <p class="remember"><b>Remember it:</b> posterior mean = weighted average of prior mean and MLE; the prior's weight is (a + b) out of (a + b + n).</p>
+  </section>
+
+  <!-- PART 8 UNCERTAINTY + PREDICTIVE -->
+  <section class="section">
+    <span class="pill"><i></i>Part 8 · Uncertainty and prediction</span>
+    <h2 class="wideh">How sure are we? <span class="dim">And what happens next?</span></h2>
+    <div class="tools">
+      <article class="tool">
+        <span class="tn">Error bar</span>
+        <h3 class="h3">Uncertainty shrinks like 1/√n</h3>
+        <p>The posterior variance is <span class="m">AB / ((A + B)²(A + B + 1))</span>. With lots of data it is about</p>
+        <div class="frm">sd ≈ √( θ̂(1 − θ̂) / n )</div>
+        <p>70 hits of 100: sd ≈ √(0.21/100) ≈ 0.046. 700 of 1000: sd ≈ 0.014. Ten times more arrows make the error bar about three times smaller (√10 ≈ 3.2). To halve the error you need four times the data.</p>
+      </article>
+      <article class="tool">
+        <span class="tn">Posterior predictive</span>
+        <h3 class="h3">P(next arrow hits) = posterior mean</h3>
+        <div class="frm">p(x̃ = 1 | D) = ∫ θ · p(θ | D) dθ = A/(A + B)</div>
+        <p>In words: average “chance of a hit” over everything you still believe. For Beta(5, 2): 5/7 ≈ 0.71, not 1.</p>
+        <p><b>Laplace's rule of succession</b> (flat prior a = b = 1): <span class="m">(k + 1)/(n + 2)</span>. Zero hits in 3 tries gives 1/5 = 0.2, never exactly 0. That is “add-one smoothing”, the fix for the zero-count problem.</p>
+      </article>
+      <article class="tool wide">
+        <span class="tn">Bonus · two arrows in a row (Week 3, Question 2)</span>
+        <h3 class="h3">Multiply step by step, updating in between</h3>
+        <p>P(next two hit) = P(first hits) × P(second hits | first hit) = <span class="m">A/(A + B) · (A + 1)/(A + B + 1)</span>. For Beta(5, 2): 5/7 · 6/8 ≈ 0.54. After the first hit, your belief is already Beta(6, 2), so the second factor uses the updated counts.</p>
+      </article>
+    </div>
+    <p class="remember"><b>Remember it:</b> more data → narrower posterior (sd ~ 1/√n). The chance of the next hit is the posterior mean, A/(A + B).</p>
+  </section>
+
+  <!-- PART 9 EXAM -->
+  <section class="section" id="exam">
+    <div class="sheet">
+      <span class="eyebrow">Part 9 · The exam task, in Dota clothes</span>
+      <h2 class="wideh">Geometric data <span class="dim">+ Beta prior (2025 &amp; 2026 finals)</span></h2>
+      <div class="prose" style="max-width:none">
+        <p><b>Setting.</b> You win each game with probability q. On each of n days you write down the number of losses kᵢ before your first win: <span class="m">p(k | q) = (1 − q)<sup>k</sup> q</span>. Prior <span class="m">q ~ Beta(a, b)</span>. The 2025 final had the same model with COVID infections; the 2026 final with drinks before going home.</p>
+      </div>
+      <div class="derive">
+        <div class="drow"><span class="k">likelihood</span><span class="eq">p(D | q) = Π (1 − q)<sup>kᵢ</sup> q = q<sup>n</sup>(1 − q)<sup>Σkᵢ</sup></span><span class="why">one win per day (n of them); losses add up</span></div>
+        <div class="drow"><span class="k">× prior</span><span class="eq">p(q | D) ∝ q<sup>n</sup>(1 − q)<sup>Σkᵢ</sup> · q<sup>a−1</sup>(1 − q)<sup>b−1</sup></span><span class="why">drop 1/B(a, b)</span></div>
+        <div class="drow"><span class="k">add powers</span><span class="eq">= q<sup>a+n−1</sup>(1 − q)<sup>b+Σkᵢ−1</sup></span><span class="why">Tool 3</span></div>
+        <div class="drow ans"><span class="k">read off</span><span class="eq">q | D ~ Beta(a + n, b + Σkᵢ)</span><span class="why">wins go to a, losses go to b. Same idea as the arrows!</span></div>
+        <div class="drow"><span class="k">predict</span><span class="eq">P(win the first game tomorrow) = p(0 | D) = E[q | D] = A/(A + B)</span><span class="why">k = 0 means “no losses before the win”: p(0 | q) = q, averaged over the posterior</span></div>
+        <div class="drow ans"><span class="k">exam numbers</span><span class="eq">posterior Beta(10, 50): p(0 | D) = 10/60 = 1/6 ≈ 0.167</span><span class="why">2025 Final, Task 3(b)</span></div>
+      </div>
+      <p class="note2"><b>2026 version:</b> counting games <i>including</i> the win, <span class="m">p(y | λ) = λ(1 − λ)<sup>y−1</sup></span>, gives <span class="m">Beta(a + n, b + Σyᵢ − n)</span>. Same thing: Σyᵢ − n is the number of losses.</p>
+    </div>
+  </section>
+
+  <!-- PART 10 BY HEART -->
+  <section class="section" id="heart">
+    <span class="pill"><i></i>Part 10 · Learn it by heart</span>
+    <h2 class="wideh">One table, six traps, <span class="dim">five questions.</span></h2>
+    <div class="tablewrap">
+      <table class="table" style="color:var(--ink)">
+        <thead><tr><th>Quantity</th><th>Formula</th><th>Mirana: Beta(2,2) + 3H, 0M</th><th>In words</th></tr></thead>
+        <tbody>
+          <tr><td>posterior</td><td><span class="m">Beta(a + k, b + n − k)</span></td><td>Beta(5, 2)</td><td>hits → a, misses → b</td></tr>
+          <tr><td>posterior mean</td><td><span class="m">A/(A + B)</span></td><td>0.714</td><td>balance point; next-arrow chance</td></tr>
+          <tr><td>MAP</td><td><span class="m">(A − 1)/(A + B − 2)</span></td><td>0.8</td><td>peak of the posterior</td></tr>
+          <tr><td>MLE</td><td><span class="m">k/n</span></td><td>1.0</td><td>data only</td></tr>
+          <tr><td>compromise</td><td><span class="m">λm + (1 − λ)k/n</span></td><td>λ = 4/7</td><td>prior worth a + b arrows</td></tr>
+          <tr><td>Laplace rule</td><td><span class="m">(k + 1)/(n + 2)</span></td><td>4/5 with a flat prior</td><td>add-one smoothing</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="traps">
+      <div class="trap"><b>Trap 1</b><span>Mixing up mean A/(A+B) and MAP (A−1)/(A+B−2). The MAP has the −1 and −2.</span></div>
+      <div class="trap"><b>Trap 2</b><span>Adding misses to a. Hits (successes) go to a, misses to b.</span></div>
+      <div class="trap"><b>Trap 3</b><span>Keeping C(n, k) or B(a, b) in the posterior shape. No θ → drop it.</span></div>
+      <div class="trap"><b>Trap 4</b><span>Geometric versions: failures k gives b + Σk; tries y gives b + Σy − n.</span></div>
+      <div class="trap"><b>Trap 5</b><span>Predicting with the MLE (“plug-in”). Use the posterior mean.</span></div>
+      <div class="trap"><b>Trap 6</b><span>Thinking MLE and MAP describe the whole posterior. Two numbers can't (2026 Final, Task 5).</span></div>
+    </div>
+    <h3 class="h3">Explain it back. Answer out loud before opening.</h3>
+    <div class="faq">
+      <details><summary>What are the prior, the likelihood and the posterior, in one sentence each?</summary><div class="a"><p>Prior: what I believed about θ before the data. Likelihood: how well each θ explains the data. Posterior: my belief after combining both, ∝ likelihood × prior.</p></div></details>
+      <details><summary>Why do the hits get added to a?</summary><div class="a"><p>The prior has θ<sup>a−1</sup>, the data has θ<sup>k</sup>. Multiplying adds the exponents: θ<sup>a+k−1</sup>, which is a Beta with first parameter a + k.</p></div></details>
+      <details><summary>What does “conjugate prior” mean?</summary><div class="a"><p>Prior and posterior are in the same family (Beta in, Beta out), so updating only changes the numbers.</p></div></details>
+      <details><summary>Why is the posterior mean between the prior mean and the MLE?</summary><div class="a"><p>It is a weighted average of them. The prior's weight is (a + b)/(a + b + n), which shrinks as you get more data.</p></div></details>
+      <details><summary>How does Bayes fix the 3-out-of-3 problem?</summary><div class="a"><p>The prior's pseudo-misses stay in the count, so the posterior never says “impossible to miss”. With Beta(2, 2): next-hit chance 5/7, not 1.</p></div></details>
+    </div>
+  </section>
+
+  <!-- PRACTICE -->
+  <section class="section" id="practice">
+    <span class="pill"><i></i>Practice · 30–40 min</span>
+    <h2 class="wideh">Practice problems. <span class="dim">Paper first.</span></h2>
+    <div class="probs">
+      <article class="prob">
+        <div class="ptop"><span class="pn">01</span><span class="lvl l1">Easy</span></div>
+        <h3>Pudge hooks</h3>
+        <p>Prior for Pudge's hook rate: Beta(2, 2). He throws 4 hooks: hit, miss, hit, hit. Find the posterior, its mean, the MAP and the MLE.</p>
+        <details><summary>Hint</summary><div class="a"><p>k = 3 hits, n − k = 1 miss. Add them to a and b.</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>Posterior Beta(2 + 3, 2 + 1) = Beta(5, 3)</li><li>Mean 5/8 = 0.625; MAP (5 − 1)/(8 − 2) = 4/6 ≈ 0.667; MLE 3/4 = 0.75</li><li>Order: mean &lt; MAP &lt; MLE here, all pulled towards the prior's 0.5 except the MLE.</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">02</span><span class="lvl l1">Easy</span></div>
+        <h3>Weak or strong belief</h3>
+        <p>(a) Which Beta means “no idea at all”? (b) Beta(2, 2) and Beta(20, 20) have the same mean. What is it, and how are they different? (c) Which one moves more after 5 hits in a row?</p>
+        <details><summary>Hint</summary><div class="a"><p>a + b is how many arrows the prior is worth.</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>(a) Beta(1, 1), flat</li><li>(b) Mean 0.5 for both. Beta(20, 20) is worth 40 arrows, so it is much narrower (more certain).</li><li>(c) Beta(2, 2) → Beta(7, 2), mean 0.78. Beta(20, 20) → Beta(25, 20), mean 0.56. The weak prior moves much more.</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">03</span><span class="lvl l2">Medium</span></div>
+        <h3>Invoker's Sunstrikes</h3>
+        <p>A new Invoker lands 0 of 3 Sunstrikes. (a) MLE of the hit rate? What does it predict for the next one? (b) With a flat prior, what is P(next Sunstrike hits)?</p>
+        <details><summary>Hint</summary><div class="a"><p>Laplace's rule: (k + 1)/(n + 2).</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>(a) 0/3 = 0: “the next one can never hit”. The zero-count problem.</li><li>(b) Posterior Beta(1, 4); P = 1/5 = 0.2.</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">04</span><span class="lvl l2">Medium</span></div>
+        <h3>The compromise formula</h3>
+        <p>Prior Beta(6, 4). Then 30 hits in 40 arrows. Find the posterior mean twice: directly, and with λ·m + (1 − λ)·MLE.</p>
+        <details><summary>Hint</summary><div class="a"><p>m = 6/10, MLE = 30/40, λ = 10/50.</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>Posterior Beta(36, 14), mean 36/50 = 0.72</li><li>λ = 0.2: 0.2 · 0.6 + 0.8 · 0.75 = 0.12 + 0.60 = 0.72 ✓</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">05</span><span class="lvl l2">Medium</span></div>
+        <h3>Day by day or all at once</h3>
+        <p>Flat prior. Day 1: 2 hits, 1 miss. Day 2: 1 hit, 3 misses. Update after day 1, then again after day 2. Then do it in one step with all data. Compare. What is P(next hit)?</p>
+        <details><summary>Hint</summary><div class="a"><p>Yesterday's posterior is today's prior.</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>After day 1: Beta(3, 2). After day 2: Beta(4, 5).</li><li>All at once: 3 hits, 4 misses → Beta(1 + 3, 1 + 4) = Beta(4, 5). Same ✓</li><li>P(next hit) = 4/9 ≈ 0.44</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">06</span><span class="lvl l3">Exam-style · 2025 Final 3</span></div>
+        <h3>Losses before the first win</h3>
+        <p><span class="m">p(k | q) = (1 − q)<sup>k</sup> q</span>, prior Beta(a, b). (a) Derive the posterior for data k₁, …, kₙ. (b) a = b = 1, data 2, 0, 3, 1: posterior and P(you win tomorrow's first game)? (c) If the posterior is Beta(10, 50), what is p(0 | D)?</p>
+        <details><summary>Hint</summary><div class="a"><p>Likelihood qⁿ(1 − q)^Σk. P(k = 0 | q) = q, so p(0 | D) is the posterior mean.</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>(a) <span class="m">q<sup>a+n−1</sup>(1 − q)<sup>b+Σk−1</sup></span> → Beta(a + n, b + Σk)</li><li>(b) n = 4, Σk = 6 → Beta(5, 7); P = 5/12 ≈ 0.42</li><li>(c) 10/60 = 1/6 ≈ 0.167</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">07</span><span class="lvl l3">Exam-style · 2026 Final 2</span></div>
+        <h3>Games until the first win</h3>
+        <p><span class="m">p(y | λ) = λ(1 − λ)<sup>y−1</sup></span>, y = 1, 2, …, prior Beta(2, 2). Data: 3, 1, 2. Derive and compute the posterior and its mean.</p>
+        <details><summary>Hint</summary><div class="a"><p>Likelihood λⁿ(1 − λ)^(Σy − n).</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>Posterior Beta(a + n, b + Σy − n) = Beta(2 + 3, 2 + 6 − 3) = Beta(5, 5)</li><li>Mean 5/10 = 0.5</li></ul></div></details>
+      </article>
+      <article class="prob">
+        <div class="ptop"><span class="pn">08</span><span class="lvl l4">Challenge · Week 3 Q2</span></div>
+        <h3>Two arrows in a row</h3>
+        <p>Posterior Beta(5, 2). (a) P(the next two arrows both hit)? (b) Compare with the “plug-in” answer (5/7)². Which is bigger, and why?</p>
+        <details><summary>Hint</summary><div class="a"><p>After the first hit the belief becomes Beta(6, 2).</p></div></details>
+        <details><summary>Solution</summary><div class="a"><ul class="steps-l"><li>(a) 5/7 · 6/8 = 30/56 ≈ 0.536</li><li>(b) (5/7)² ≈ 0.510. The Bayesian answer is bigger: a first hit makes you believe more in a high θ, which raises the chance of the second.</li></ul></div></details>
+      </article>
+    </div>
+  </section>
+
+  <!-- FINAL -->
+  <section class="final">
+    <div>
+      <span class="script">thanks for studying ·</span>
+      <div class="big2"><span>a + k,</span><br>b + n − k</div>
+    </div>
+    <div class="side">
+      <p>Done when you can derive Beta(a + k, b + n − k) on a blank page and explain mean, MAP and MLE with the Mirana numbers. Next lecture: conjugate priors in general and the Dirichlet model.</p>
+      <a class="btn or" href="https://stellasdeutsch-dev.github.io/maxlike/">Lecture 2: MaxLike</a>
+      <a class="btn ghost" style="background:#eef1f7;color:#151a24" href="https://stellasdeutsch-dev.github.io/distribution-valley/">Lecture 1: Distribution Valley</a>
+    </div>
+  </section>
+
+  <footer>Prior Plus Data · Statistical Learning, Lecture 3 · Dota 2 examples, made-up numbers</footer>
+</div>
+
+<script>
+(function(){
+  const LG=[0.99999999999980993,676.5203681218851,-1259.1392167224028,771.32342877765313,-176.61502916214059,12.507343278686905,-0.13857109526572012,9.9843695780195716e-6,1.5056327351493116e-7];
+  function lgamma(z){if(z<0.5)return Math.log(Math.PI/Math.sin(Math.PI*z))-lgamma(1-z);z-=1;let x=LG[0];for(let i=1;i<9;i++)x+=LG[i]/(z+i);const t=z+7.5;return 0.5*Math.log(2*Math.PI)+(z+0.5)*Math.log(t)-t+Math.log(x)}
+  function bpdf(x,a,b){if(x<=0||x>=1){if(x<=0)return a===1?Math.exp(-lbeta(a,b)):(a<1?Infinity:0);return b===1?Math.exp(-lbeta(a,b)):(b<1?Infinity:0)}return Math.exp((a-1)*Math.log(x)+(b-1)*Math.log(1-x)-lbeta(a,b))}
+  function lbeta(a,b){return lgamma(a)+lgamma(b)-lgamma(a+b)}
+  function path(a,b,W,H,pad,ymax,close){const N=200;let d="";for(let i=0;i<=N;i++){const x=i/N,y=Math.min(bpdf(x,a,b),ymax);const X=pad+x*(W-2*pad),Y=H-pad-y/ymax*(H-2*pad);d+=(i?"L":"M")+X.toFixed(1)+" "+Y.toFixed(1)}if(close)d+=`L${W-pad} ${H-pad}L${pad} ${H-pad}Z`;return d}
+  const maxOf=(a,b)=>{let m=0;for(let i=1;i<200;i++){m=Math.max(m,bpdf(i/200,a,b))}return m};
+  // hero mockups
+  document.getElementById("phoneCurve").setAttribute("d",path(5,2,220,120,10,maxOf(5,2)*1.1,true));
+  const ym=Math.max(maxOf(2,2),maxOf(5,2))*1.1;
+  document.getElementById("deskPrior").setAttribute("d",path(2,2,520,170,12,ym,false));
+  document.getElementById("deskPost").setAttribute("d",path(5,2,520,170,12,ym,true));
+
+  // lab
+  let data=["H","H","H"];
+  const chart=document.getElementById("chart"),pa=document.getElementById("pa"),pb=document.getElementById("pb");
+  const W=560,H=260,L=36,R=14,T=18,B=34,PW=W-L-R,PH=H-T-B;
+  const tx=(x,y,s,a="middle",f="#949db0",w=600,sz=12)=>`<text x="${x}" y="${y}" text-anchor="${a}" font-family="Manrope, sans-serif" font-size="${sz}" font-weight="${w}" fill="${f}">${s}</text>`;
+  const f2=v=>Number.isFinite(v)?v.toFixed(2):"—";
+  function draw(){
+    const a=+pa.value,b=+pb.value;document.getElementById("pao").textContent=a;document.getElementById("pbo").textContent=b;
+    const k=data.filter(d=>d==="H").length,n=data.length,A=a+k,Bb=b+n-k;
+    let ymax=Math.max(maxOf(a,b),maxOf(A,Bb))*1.12;if(!(ymax>0))ymax=1;
+    const X=x=>L+x*PW,Y=y=>T+PH-Math.min(y,ymax)/ymax*PH;
+    const pth=(aa,bb,close)=>{let d="";for(let i=0;i<=220;i++){const x=i/220;d+=(i?"L":"M")+X(x).toFixed(1)+" "+Y(bpdf(x,aa,bb)).toFixed(1)}return close?d+`L${X(1)} ${T+PH}L${X(0)} ${T+PH}Z`:d};
+    let s=`<line x1="${L}" y1="${T+PH}" x2="${W-R}" y2="${T+PH}" stroke="#4a5468"/>`;
+    [0,.25,.5,.75,1].forEach(v=>{s+=`<line x1="${X(v)}" y1="${T}" x2="${X(v)}" y2="${T+PH}" stroke="rgba(255,255,255,.05)"/>`+tx(X(v),T+PH+18,v)});
+    s+=tx(L-8,T+10,"high","end")+tx(L-8,T+PH,"0","end");
+    s+=`<path d="${pth(A,Bb,true)}" fill="rgba(110,166,255,.25)"/><path d="${pth(A,Bb,false)}" fill="none" stroke="#6ea6ff" stroke-width="3"/>`;
+    s+=`<path d="${pth(a,b,false)}" fill="none" stroke="#9aa3bd" stroke-width="2.5" stroke-dasharray="6 6"/>`;
+    const mean=A/(A+Bb);
+    s+=`<line x1="${X(mean)}" y1="${T}" x2="${X(mean)}" y2="${T+PH}" stroke="#fff" stroke-width="2"/>`;
+    if(n>0){const mle=k/n;s+=`<line x1="${X(mle)}" y1="${T}" x2="${X(mle)}" y2="${T+PH}" stroke="#f08a3c" stroke-width="2.5" stroke-dasharray="4 4"/>`}
+    chart.innerHTML=s;
+    chart.setAttribute("aria-label",`Prior Beta(${a}, ${b}); after ${k} hits and ${n-k} misses the posterior is Beta(${A}, ${Bb}) with mean ${f2(mean)}`);
+    const map=(A>1&&Bb>1)?(A-1)/(A+Bb-2):(A>1?1:(Bb>1?0:NaN));
+    const sd=Math.sqrt(A*Bb/((A+Bb)**2*(A+Bb+1)));
+    document.getElementById("rPost").textContent=`Beta(${A}, ${Bb})`;
+    document.getElementById("rMean").textContent=f2(mean);
+    document.getElementById("rMap").textContent=Number.isFinite(map)?f2(map):"flat";
+    document.getElementById("rMle").textContent=n?f2(k/n):"—";
+    document.getElementById("rSd").textContent=sd.toFixed(3);
+    document.getElementById("rPred").textContent=f2(mean);
+    document.getElementById("data").innerHTML=data.length?data.map(d=>`<span class="tok ${d}">${d}</span>`).join(""):'<span class="note2">No arrows yet: the posterior equals the prior.</span>';
+    const lam=(a+b)/(a+b+n);
+    document.getElementById("lnote").innerHTML=`Update: Beta(${a}, ${b}) + ${k} hits, ${n-k} misses = <b>Beta(${A}, ${Bb})</b>. Prior weight λ = ${a+b}/${a+b+n} = ${lam.toFixed(2)}${n?`, so the mean is ${lam.toFixed(2)}·${(a/(a+b)).toFixed(2)} + ${(1-lam).toFixed(2)}·${(k/n).toFixed(2)} = ${mean.toFixed(2)}`:""}.`;
+  }
+  document.getElementById("addH").onclick=()=>{if(data.length<80){data.push("H");draw()}};
+  document.getElementById("addM").onclick=()=>{if(data.length<80){data.push("M");draw()}};
+  document.getElementById("clear").onclick=()=>{data=[];draw()};
+  pa.addEventListener("input",draw);pb.addEventListener("input",draw);
+  draw();
+})();
+</script>
+</body>
+</html>
