@@ -10,7 +10,7 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter+Tight:wght@500;600;700&family=Manrope:wght@400;500;600;700&family=Unbounded:wght@300;400;500&family=Caveat:wght@500;700&family=STIX+Two+Text:ital,wght@0,500;1,500&display=swap">
 <style>
-/* Layout: bright product-catalogue page on a pale blue-grey ground; framed device mockups in the hero, slate cards, blue gradient feature cards, isometric step blocks, a light "sheet" for dense math. Dark navy is kept only for the device screens and one formula block, for contrast. Single committed light look. */
+/* Layout: bright product-catalogue page on a pale blue-grey ground; framed device mockups in the hero, slate cards, blue gradient feature cards, isometric step blocks, a light "sheet" for dense math. Single committed light look. */
 :root{
   color-scheme:light;
   --bg:#f3f6fb; --navy:#ffffff; --slate:#eef2f9; --slate-2:#e2e8f3; --edge:#d3dae7;
@@ -71,20 +71,20 @@ h1,h2,h3{margin:0;text-wrap:balance}
 .devices{display:grid;grid-template-columns:minmax(0,.42fr) minmax(0,1fr);gap:18px;align-items:end;margin-top:6px}
 .frame{border:2px solid #c5cedd;border-radius:30px;padding:10px;background:#fff}
 .frame.phone{border-radius:34px}
-.scr{background:#171e2a;color:#e8ecf4;border-radius:22px;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:100%}
+.scr{background:linear-gradient(160deg,#eaf1ff,#f7f9ff);color:#151a24;border-radius:22px;overflow:hidden;padding:16px;display:flex;flex-direction:column;gap:12px;min-height:100%}
 .phone .scr{border-radius:26px}
-.scr .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#949db0}
-.scr .dim{color:#9aa3bd}
+.scr .bar{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:12px;color:#5b6478}
+.scr .dim{color:#8a93ab}
 .scr .bar b{font-family:var(--display);color:var(--orange);font-size:15px}
 .scr h3{font-family:var(--wide);font-weight:300;text-transform:uppercase;font-size:clamp(15px,1.9vw,24px);line-height:1.2}
 .chipr{display:flex;gap:6px;flex-wrap:wrap}
-.chipr span{font-size:11.5px;background:#283244;border-radius:8px;padding:4px 8px;color:#e8ecf4}
+.chipr span{font-size:11.5px;background:#dbe6fb;border-radius:8px;padding:4px 8px;color:#151a24}
 .chipr span.o{background:var(--orange);color:#1b120a;font-weight:700}
-.mini-curve{width:100%;height:auto;display:block;background:#202938;border-radius:14px}
+.mini-curve{width:100%;height:auto;display:block;background:#fff;border:1px solid #d9e3f5;border-radius:14px}
 .statrow{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-.stat{background:#202938;border-radius:12px;padding:10px 12px}
+.stat{background:#fff;border:1px solid #d9e3f5;border-radius:12px;padding:10px 12px}
 .stat b{display:block;font:700 22px var(--display);letter-spacing:-.03em}
-.stat small{color:#949db0;font-size:11.5px}
+.stat small{color:#5b6478;font-size:11.5px}
 
 /* start */
 .startgrid{display:grid;grid-template-columns:1.2fr 1fr;gap:16px}
@@ -141,12 +141,12 @@ details .a{margin-top:10px;font-size:15.5px;color:var(--body-text);display:flex;
 .drow .why{font-size:14.5px;color:var(--ink-2)}
 .drow.ans{background:#eaf1ff}
 .drow.ans .eq{font-weight:600}
-.dark .derive{background:#171e2a;border-color:#4a5468}
-.dark .drow{border-color:#4a5468}
-.dark .drow .eq{color:#fff}
-.dark .drow .why{color:#9aa3bd}
-.dark .drow.ans{background:#22304a}
-.dark .drow .k{color:var(--orange)}
+.dark .derive{background:#eaf1ff;border-color:#cddcff}
+.dark .drow{border-color:#d6e2fb}
+.dark .drow .eq{color:#151a24}
+.dark .drow .why{color:#5b6478}
+.dark .drow.ans{background:#d6e4ff}
+.dark .drow .k{color:#c25d14}
 
 /* isometric steps */
 .isosteps{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
@@ -278,7 +278,7 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:14px}
           <div class="bar"><span>9:41</span><b>β</b><span>●●●</span></div>
           <h3>Mirana · <span class="dim">hit rate θ</span></h3>
           <div class="chipr"><span class="o">prior Beta(2, 2)</span><span>+3 hits</span><span>+0 misses</span></div>
-          <svg class="mini-curve" viewBox="0 0 220 120"><path id="phoneCurve" fill="rgba(110,166,255,.35)" stroke="#6ea6ff" stroke-width="2.5" d=""/></svg>
+          <svg class="mini-curve" viewBox="0 0 220 120"><path id="phoneCurve" fill="rgba(61,126,242,.22)" stroke="#3d7ef2" stroke-width="2.5" d=""/></svg>
           <div class="statrow"><div class="stat"><b>0.71</b><small>posterior mean</small></div><div class="stat"><b class="or" style="color:var(--orange)">1.00</b><small>MLE</small></div></div>
         </div>
       </div>
@@ -286,8 +286,8 @@ footer{text-align:center;color:var(--muted);font-size:13px;padding-top:14px}
         <div class="scr">
           <div class="bar"><span>beta-binomial · dashboard</span><span>Lecture 3</span></div>
           <h3>Belief before <span class="dim">→ data →</span> belief after</h3>
-          <svg class="mini-curve" viewBox="0 0 520 170"><path id="deskPrior" fill="none" stroke="#9aa3bd" stroke-width="2.5" stroke-dasharray="6 6" d=""/><path id="deskPost" fill="rgba(110,166,255,.30)" stroke="#6ea6ff" stroke-width="3" d=""/></svg>
-          <div class="statrow"><div class="stat"><b>Beta(2, 2)</b><small>prior: “about 50%”</small></div><div class="stat"><b>3 / 0</b><small>hits / misses</small></div><div class="stat"><b style="color:#6ea6ff">Beta(5, 2)</b><small>posterior</small></div></div>
+          <svg class="mini-curve" viewBox="0 0 520 170"><path id="deskPrior" fill="none" stroke="#8a93ab" stroke-width="2.5" stroke-dasharray="6 6" d=""/><path id="deskPost" fill="rgba(61,126,242,.20)" stroke="#3d7ef2" stroke-width="3" d=""/></svg>
+          <div class="statrow"><div class="stat"><b>Beta(2, 2)</b><small>prior: “about 50%”</small></div><div class="stat"><b>3 / 0</b><small>hits / misses</small></div><div class="stat"><b style="color:#2f6fe8">Beta(5, 2)</b><small>posterior</small></div></div>
         </div>
       </div>
     </div>
